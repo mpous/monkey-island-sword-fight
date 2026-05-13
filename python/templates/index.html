@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monkey Island - Insult Sword Fight</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>&#9876;</text></svg>">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Pirata+One&family=IM+Fell+English+SC&family=MedievalSharp&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --parchment: #f4e4c1;
+            --parchment-dark: #d4c4a1;
+            --ink: #2a1a0a;
+            --blood-red: #8b1a1a;
+            --sea-blue: #1a3a5c;
+            --sea-dark: #0d1f33;
+            --gold: #c9a84c;
+            --gold-bright: #ffd700;
+            --correct-green: #2d5a1e;
+            --wrong-red: #8b1a1a;
+            --panel-bg: rgba(10, 22, 40, 0.85);
+            --bar-height: 46px;
+        }
+
+        html, body {
+            height: 100%;
+            overflow: hidden;
+            font-family: 'IM Fell English SC', serif;
+            background: var(--sea-dark);
+            color: var(--parchment);
+        }
+
+        /* ===== Brand bar ===== */
+        .brand-bar {
+            position: fixed;
+            top: 0; left: 0; right: 0;
+            z-index: 200;
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 10px 20px;
+            height: var(--bar-height);
+            background: #ffffff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+        }
+        .brand-bar a { display: flex; align-items: center; text-decoration: none; }
+        .brand-bar img { height: 24px; }
+        .brand-bar .separator { width: 1px; height: 20px; background: #d0d0d0; }
+        .brand-bar .app-name {
+            font-family: 'Pirata One', cursive;
+            font-size: 1.1em;
+            color: #1a1a1a;
+            white-space: nowrap;
+        }
+        .brand-bar .model-link {
+            font-family: 'IM Fell English SC', serif;
+            font-size: 0.85em;
+            color: #1a3a5c;
+            text-decoration: none;
+            padding: 4px 12px;
+            border: 1px solid #c0c0c0;
+            border-radius: 4px;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .brand-bar .model-link:hover { background: #f0f0f0; border-color: #999; }
+
+        .connection-status {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.7em;
+            font-family: 'MedievalSharp', cursive;
+            white-space: nowrap;
+        }
+        .connection-status.connected {
+            background: rgba(45,90,30,0.15); color: #2d5a1e; border: 1px solid rgba(45,90,30,0.4);
+        }
+        .connection-status.disconnected {
+            background: rgba(139,26,26,0.15); color: #8b1a1a; border: 1px solid rgba(139,26,26,0.4);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+        @keyframes pulse { 0%,100%{opacity:.5} 50%{opacity:1} }
+
+        /* ===== Main layout: two columns filling viewport ===== */
+        .main-layout {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 14px;
+            padding: 14px 16px;
+            height: calc(100vh - var(--bar-height));
+            margin-top: var(--bar-height);
+            overflow: hidden;
+        }
+
+        /* --- Left column --- */
+        .left-col {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .title-area { text-align: center; padding: 6px 0; flex-shrink: 0; }
+        .title-area h1 {
+            font-family: 'Pirata One', cursive;
+            font-size: 3.6em;
+            color: var(--gold);
+            text-shadow: 2px 2px 0 var(--ink), 4px 4px 8px rgba(0,0,0,0.5);
+            letter-spacing: 3px;
+            line-height: 1;
+        }
+        .title-area .subtitle {
+            font-family: 'MedievalSharp', cursive;
+            color: var(--parchment-dark);
+            font-size: 1.2em;
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        .scoreboard {
+            display: none;
+            justify-content: center;
+            gap: 50px;
+            padding: 12px 20px;
+            background: rgba(0,0,0,0.35);
+            border: 1px solid rgba(201,168,76,0.3);
+            border-radius: 8px;
+            backdrop-filter: blur(4px);
+            flex-shrink: 0;
+        }
+        .score-item { text-align: center; }
+        .score-item .label {
+            font-family: 'MedievalSharp', cursive;
+            font-size: 1em;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .score-item .value {
+            font-family: 'Pirata One', cursive;
+            font-size: 3.2em;
+            color: var(--parchment);
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            line-height: 1.1;
+        }
+        .score-item .value.player-ahead { color: var(--gold-bright); }
+        .score-item .value.master-ahead { color: var(--blood-red); }
+        .round-indicator { text-align: center; }
+        .round-indicator .label {
+            font-family: 'MedievalSharp', cursive; font-size: 1em; color: var(--gold);
+            text-transform: uppercase; letter-spacing: 2px;
+        }
+        .round-indicator .value {
+            font-family: 'Pirata One', cursive; font-size: 1.8em; color: var(--parchment-dark); line-height: 1.1;
+        }
+
+        .divider {
+            display: none; text-align: center; font-size: 1.2em;
+            color: var(--gold); opacity: 0.6; flex-shrink: 0;
+        }
+
+        .game-area {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            background:
+                radial-gradient(ellipse at 30% 20%, rgba(212,196,161,0.5) 0%, transparent 50%),
+                radial-gradient(ellipse at 70% 80%, rgba(200,180,140,0.3) 0%, transparent 50%),
+                linear-gradient(135deg, var(--parchment) 0%, var(--parchment-dark) 100%);
+            border-radius: 10px;
+            padding: 22px 26px;
+            color: var(--ink);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4), inset 0 0 40px rgba(42,26,10,0.1);
+            border: 2px solid rgba(42,26,10,0.2);
+            scrollbar-width: thin;
+            scrollbar-color: rgba(42,26,10,0.2) transparent;
+        }
+
+        /* --- Right column --- */
+        .right-col {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .panel {
+            background: var(--panel-bg);
+            border: 1px solid rgba(201,168,76,0.25);
+            border-radius: 10px;
+            overflow: hidden;
+            backdrop-filter: blur(6px);
+            display: flex;
+            flex-direction: column;
+        }
+        .panel.audio-panel { flex-shrink: 0; }
+        .panel.inference-panel { flex: 1; min-height: 0; }
+
+        .panel-header {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 14px;
+            background: rgba(201,168,76,0.1);
+            border-bottom: 1px solid rgba(201,168,76,0.15);
+            flex-shrink: 0;
+        }
+        .panel-header h3 {
+            font-family: 'Pirata One', cursive; font-size: 1.05em;
+            color: var(--gold); letter-spacing: 1px;
+        }
+
+        .panel-body {
+            padding: 12px 14px;
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(201,168,76,0.3) transparent;
+        }
+
+        /* Info rows */
+        .info-row { margin-bottom: 10px; }
+        .info-row label {
+            display: block; font-family: 'MedievalSharp', cursive; color: var(--gold);
+            font-size: 0.8em; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;
+        }
+        .info-row select {
+            width: 100%; padding: 5px 8px; background: rgba(0,0,0,0.4); color: var(--parchment);
+            border: 1px solid rgba(201,168,76,0.3); border-radius: 5px;
+            font-family: 'IM Fell English SC', serif; font-size: 0.82em;
+        }
+        .info-row select:focus { outline: none; border-color: var(--gold); }
+        .info-value {
+            padding: 6px 8px; background: rgba(0,0,0,0.25);
+            border: 1px solid rgba(201,168,76,0.15); border-radius: 5px;
+            font-size: 0.85em; color: var(--parchment); word-break: break-word;
+        }
+        .info-value .model-name { font-family: 'Pirata One', cursive; font-size: 1.1em; color: var(--gold-bright); }
+        .info-value .model-detail { font-size: 0.78em; color: rgba(244,228,193,0.5); margin-top: 2px; }
+        .info-value .model-labels { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+        .model-label-tag {
+            padding: 1px 7px; border-radius: 10px; font-family: monospace; font-size: 0.78em;
+            border: 1px solid rgba(201,168,76,0.3); background: rgba(201,168,76,0.1); color: var(--parchment-dark);
+        }
+
+        /* Inference */
+        .inference-section-title {
+            font-family: 'MedievalSharp', cursive; color: var(--gold);
+            font-size: 0.8em; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px;
+        }
+        .inference-bars { margin-bottom: 12px; }
+        .bar-row { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+        .bar-label {
+            min-width: 55px; font-family: 'Pirata One', cursive; font-size: 0.95em;
+            color: var(--parchment); text-align: right;
+        }
+        .bar-track {
+            flex: 1; height: 14px; background: rgba(255,255,255,0.08);
+            border-radius: 7px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05);
+        }
+        .bar-fill {
+            height: 100%; border-radius: 7px;
+            transition: width 0.25s ease, background 0.25s ease;
+        }
+        .bar-value { min-width: 44px; font-family: monospace; font-size: 0.78em; color: var(--parchment-dark); text-align: right; }
+        .bar-fill.high   { background: linear-gradient(90deg, #2d7a1e, #4caf50); }
+        .bar-fill.medium { background: linear-gradient(90deg, #b8860b, #daa520); }
+        .bar-fill.low    { background: linear-gradient(90deg, #5a1a1a, #8b1a1a); }
+        .no-inference { color: rgba(244,228,193,0.35); font-style: italic; font-size: 0.85em; text-align: center; padding: 8px; }
+
+        .det-log { max-height: 200px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: rgba(201,168,76,0.3) transparent; }
+        .det-entry { display: flex; align-items: center; gap: 6px; padding: 2px 6px; margin-bottom: 2px; border-radius: 3px; font-size: 0.8em; animation: detSlide 0.3s ease-out; }
+        @keyframes detSlide { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
+        .det-entry .det-time { font-family: monospace; color: rgba(244,228,193,0.4); font-size: 0.82em; min-width: 56px; }
+        .det-entry .det-label { font-family: 'Pirata One', cursive; font-size: 1em; min-width: 20px; }
+        .det-entry .det-label.kw-A { color: #4caf50; } .det-entry .det-label.kw-B { color: #2196f3; }
+        .det-entry .det-label.kw-C { color: #ff9800; } .det-entry .det-label.kw-noise,.det-entry .det-label.kw-unknown { color: rgba(244,228,193,0.3); }
+        .det-entry .det-dot { width: 6px; height: 6px; border-radius: 50%; animation: dotPulse 0.6s ease-out; }
+        @keyframes dotPulse { 0%{transform:scale(2);opacity:.5} 100%{transform:scale(1);opacity:1} }
+        .det-dot.kw-A{background:#4caf50} .det-dot.kw-B{background:#2196f3} .det-dot.kw-C{background:#ff9800}
+        .det-dot.kw-noise,.det-dot.kw-unknown{background:rgba(244,228,193,0.2)}
+
+        /* ===== Game content ===== */
+        .sword-master { text-align: center; margin-bottom: 10px; }
+        .sword-master .portrait { font-size: 2.4em; line-height: 1; }
+        .sword-master .name { font-family: 'Pirata One', cursive; font-size: 1.2em; color: var(--blood-red); margin-top: 2px; }
+
+        .insult-text {
+            font-family: 'MedievalSharp', cursive; font-size: 1.5em;
+            text-align: center; padding: 14px 18px; margin: 10px 0;
+            background: rgba(42,26,10,0.08); border-left: 4px solid var(--blood-red);
+            border-radius: 0 8px 8px 0; line-height: 1.3; color: var(--ink);
+            animation: insultAppear 0.5s ease-out;
+        }
+        @keyframes insultAppear { from{opacity:0;transform:translateX(-20px)} to{opacity:1;transform:translateX(0)} }
+
+        .voice-hint { text-align: center; margin: 8px 0; padding: 6px; background: rgba(26,58,92,0.1); border-radius: 6px; border: 1px dashed var(--sea-blue); }
+        .voice-hint .mic-icon { font-size: 1.2em; animation: micPulse 1.5s ease-in-out infinite; }
+        @keyframes micPulse { 0%,100%{opacity:.5;transform:scale(1)} 50%{opacity:1;transform:scale(1.1)} }
+        .voice-hint .text { font-size: 0.85em; color: var(--sea-blue); margin-top: 2px; }
+
+        .options { display: flex; flex-direction: column; gap: 8px; margin: 10px 0; }
+        .option {
+            display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px;
+            background: rgba(255,255,255,0.5); border: 2px solid rgba(42,26,10,0.15);
+            border-radius: 8px; transition: all 0.2s ease; animation: optionSlide 0.4s ease-out backwards;
+        }
+        .option.clickable { cursor: pointer; user-select: none; }
+        .option.clickable:hover { background: rgba(201,168,76,0.25); border-color: var(--gold); transform: translateX(6px); box-shadow: 0 2px 8px rgba(201,168,76,0.2); }
+        .option.clickable:active { transform: translateX(3px); background: rgba(201,168,76,0.35); }
+        .option:nth-child(1){animation-delay:.1s} .option:nth-child(2){animation-delay:.2s} .option:nth-child(3){animation-delay:.3s}
+        @keyframes optionSlide { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:translateY(0)} }
+        .option .letter { font-family: 'Pirata One', cursive; font-size: 2em; color: var(--sea-blue); min-width: 36px; text-align: center; line-height: 1; }
+        .option .comeback-text { font-family: 'MedievalSharp', cursive; font-size: 1.15em; color: var(--ink); line-height: 1.3; padding-top: 4px; }
+        .option.selected-correct { background: rgba(45,90,30,0.2); border-color: var(--correct-green); }
+        .option.selected-correct .letter { color: var(--correct-green); }
+        .option.selected-wrong { background: rgba(139,26,26,0.15); border-color: var(--blood-red); }
+        .option.selected-wrong .letter { color: var(--blood-red); }
+        .option.was-correct { border-color: var(--correct-green); border-style: dashed; }
+
+        .result-banner { text-align: center; padding: 12px; margin: 8px 0; border-radius: 8px; animation: bannerPop 0.4s cubic-bezier(0.34,1.56,0.64,1); }
+        @keyframes bannerPop { from{transform:scale(.8);opacity:0} to{transform:scale(1);opacity:1} }
+        .result-banner.correct { background: rgba(45,90,30,0.15); border: 2px solid var(--correct-green); }
+        .result-banner.wrong { background: rgba(139,26,26,0.1); border: 2px solid var(--blood-red); }
+        .result-banner .result-icon { font-size: 2em; }
+        .result-banner .result-text { font-family: 'Pirata One', cursive; font-size: 1.3em; margin-top: 4px; }
+        .result-banner.correct .result-text { color: var(--correct-green); }
+        .result-banner.wrong .result-text { color: var(--blood-red); }
+
+        .endgame { text-align: center; padding: 20px; }
+        .endgame .icon { font-size: 3em; margin-bottom: 8px; }
+        .endgame h2 { font-family: 'Pirata One', cursive; font-size: 2em; margin-bottom: 8px; }
+        .endgame.win h2 { color: var(--correct-green); } .endgame.lose h2 { color: var(--blood-red); }
+        .endgame p { font-family: 'MedievalSharp', cursive; font-size: 1.1em; margin-bottom: 10px; line-height: 1.4; }
+
+        .intro { text-align: center; padding: 16px; }
+        .intro .pirate-icon { font-size: 3.5em; margin-bottom: 8px; }
+        .intro h2 { font-family: 'Pirata One', cursive; font-size: 1.7em; color: var(--blood-red); margin-bottom: 10px; }
+        .intro p { font-family: 'MedievalSharp', cursive; font-size: 1.1em; line-height: 1.4; margin-bottom: 6px; color: var(--ink); }
+        .intro .rules { text-align: left; padding: 10px 14px; background: rgba(42,26,10,0.06); border-radius: 6px; margin: 8px 0; }
+        .intro .rules p { font-size: 0.95em; margin-bottom: 5px; }
+
+        .btn {
+            font-family: 'Pirata One', cursive; font-size: 1.4em; padding: 12px 36px;
+            border: 3px solid var(--gold);
+            background: linear-gradient(180deg, rgba(201,168,76,0.2) 0%, rgba(201,168,76,0.05) 100%);
+            color: var(--ink); border-radius: 8px; cursor: pointer; transition: all 0.2s; letter-spacing: 1px;
+        }
+        .btn:hover { background: linear-gradient(180deg, rgba(201,168,76,0.4) 0%, rgba(201,168,76,0.1) 100%); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(201,168,76,0.3); }
+        .btn:active { transform: translateY(0); }
+
+        .fight-log { margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(42,26,10,0.15); }
+        .fight-log h3 { font-family: 'Pirata One', cursive; font-size: 1em; color: var(--sea-blue); margin-bottom: 6px; }
+        .log-entry { padding: 4px 8px; margin-bottom: 3px; border-radius: 4px; font-size: 0.85em; display: flex; gap: 6px; align-items: center; }
+        .log-entry.correct-log { background: rgba(45,90,30,0.1); } .log-entry.wrong-log { background: rgba(139,26,26,0.08); }
+        .log-entry .log-icon { font-size: 1em; } .log-entry .log-text { flex: 1; }
+
+        .footer { text-align: center; padding: 6px; color: rgba(244,228,193,0.35); font-size: 0.72em; flex-shrink: 0; }
+        .footer a { color: rgba(244,228,193,0.45); text-decoration: none; } .footer a:hover { color: var(--gold); }
+
+        @media (max-width: 900px) {
+            .main-layout { grid-template-columns: 1fr; overflow-y: auto; height: auto; }
+            .right-col { min-height: 300px; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Brand bar -->
+    <div class="brand-bar">
+        <a href="https://edgeimpulse.com" target="_blank" rel="noopener">
+            <img src="https://cdn.prod.website-files.com/618cdeef45d18e4ef2fd85f3/618e33d89badebdfe7c5897a_Logo%20(2).svg" alt="Edge Impulse">
+        </a>
+        <div class="separator"></div>
+        <span class="app-name">Monkey Island Insult Sword Fight</span>
+        <div style="flex:1"></div>
+        <a class="model-link" href="https://studio.edgeimpulse.com/public/995535/live" target="_blank" rel="noopener">A-B-C Model</a>
+        <div class="separator"></div>
+        <div class="connection-status disconnected" id="conn-status">Connecting...</div>
+    </div>
+
+    <!-- Main two-column layout -->
+    <div class="main-layout">
+        <!-- Left: game -->
+        <div class="left-col">
+            <div class="title-area">
+                <h1>Insult Sword Fighting</h1>
+                <div class="subtitle">The Secret of Monkey Island &mdash; Arduino UNO Q Edition</div>
+            </div>
+
+            <div class="scoreboard" id="scoreboard">
+                <div class="score-item">
+                    <div class="label">Guybrush</div>
+                    <div class="value" id="player-score">0</div>
+                </div>
+                <div class="round-indicator">
+                    <div class="label">Round</div>
+                    <div class="value" id="round-display">1/5</div>
+                </div>
+                <div class="score-item">
+                    <div class="label">Sword Master</div>
+                    <div class="value" id="master-score">0</div>
+                </div>
+            </div>
+
+            <div class="divider" id="swords-divider">&#9876; &#9876;</div>
+
+            <div class="game-area" id="game-area">
+                <div id="intro-screen" class="intro">
+                    <div class="pirate-icon">&#9876;</div>
+                    <h2>Prepare to Duel the Sword Master!</h2>
+                    <p>The Sword Master of Melee Island stands before you, sword drawn, tongue sharper than her blade.</p>
+                    <div class="rules">
+                        <p>&#9876; The Sword Master will insult you.</p>
+                        <p>&#128065; Choose <strong>A</strong>, <strong>B</strong>, or <strong>C</strong> &mdash; click the correct comeback.</p>
+                        <p>&#127908; Or speak A, B, or C into the microphone.</p>
+                        <p>&#9989; Three correct comebacks wins! &#10060; Three wrong loses!</p>
+                    </div>
+                    <button class="btn" onclick="sendAction('start')">Draw Your Sword!</button>
+                </div>
+
+                <div id="fight-screen" style="display:none;">
+                    <div class="sword-master">
+                        <div class="portrait">&#129399;</div>
+                        <div class="name">The Sword Master</div>
+                    </div>
+                    <div class="insult-text" id="insult-text"></div>
+                    <div class="voice-hint" id="voice-hint">
+                        <div class="mic-icon">&#127908;</div>
+                        <div class="text">Speak <strong>A</strong>, <strong>B</strong>, or <strong>C</strong> &mdash; or click below</div>
+                    </div>
+                    <div class="options" id="options-area"></div>
+                    <div id="result-area"></div>
+                    <div class="fight-log" id="fight-log" style="display:none;">
+                        <h3>Battle Log</h3>
+                        <div id="log-entries"></div>
+                    </div>
+                </div>
+
+                <div id="win-screen" class="endgame win" style="display:none;">
+                    <div class="icon">&#127942;</div>
+                    <h2>Victory is Yours!</h2>
+                    <p>The Sword Master bows. Your tongue is sharper than any blade!</p>
+                    <div id="win-log"></div>
+                    <button class="btn" onclick="sendAction('restart')">Fight Again!</button>
+                </div>
+
+                <div id="lose-screen" class="endgame lose" style="display:none;">
+                    <div class="icon">&#128128;</div>
+                    <h2>Defeated!</h2>
+                    <p>The Sword Master laughs. Practice more with the pirates in the forest...</p>
+                    <div id="lose-log"></div>
+                    <button class="btn" onclick="sendAction('restart')">Try Again!</button>
+                </div>
+            </div>
+
+            <div class="footer">
+                <a href="https://www.arduino.cc/hardware/uno-q" target="_blank">Arduino UNO Q</a>
+                &bull; <a href="https://edgeimpulse.com" target="_blank">Edge Impulse</a>
+                &bull; <a href="https://labs.arduino.cc/en/app-lab" target="_blank">App Lab</a>
+            </div>
+        </div>
+
+        <!-- Right: panels -->
+        <div class="right-col">
+            <div class="panel audio-panel">
+                <div class="panel-header"><h3>&#127908; Audio Device</h3></div>
+                <div class="panel-body">
+                    <div class="info-row">
+                        <label>Microphone</label>
+                        <select id="mic-select"><option>Loading...</option></select>
+                    </div>
+                    <div class="info-row">
+                        <label>Edge Impulse Model</label>
+                        <div class="info-value" id="model-info"><span class="model-name">Loading...</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="panel inference-panel">
+                <div class="panel-header"><h3>&#9881; Inference Monitor</h3></div>
+                <div class="panel-body">
+                    <div class="inference-section-title">Real-time Confidence</div>
+                    <div class="inference-bars" id="inference-bars">
+                        <div class="no-inference" id="no-inference">Waiting for inference data...</div>
+                    </div>
+                    <div class="inference-section-title">Detection Log</div>
+                    <div class="det-log" id="det-log">
+                        <div class="no-inference">No detections yet</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        var evtSource = null;
+        var inputLocked = false;
+        var detectionHistory = [];
+        var hasInferenceData = false;
+
+        function connectSSE() {
+            if (evtSource) evtSource.close();
+            evtSource = new EventSource('/events');
+            evtSource.onopen = function() {
+                document.getElementById('conn-status').className = 'connection-status connected';
+                document.getElementById('conn-status').textContent = 'Connected';
+            };
+            evtSource.addEventListener('state', function(e) {
+                try { updateUI(JSON.parse(e.data)); } catch(err) { console.error('state parse:', err); }
+            });
+            evtSource.addEventListener('inference', function(e) {
+                try { updateInferenceBars(JSON.parse(e.data)); } catch(err) { console.error('inference parse:', err); }
+            });
+            evtSource.addEventListener('detection', function(e) {
+                try { addDetection(JSON.parse(e.data)); } catch(err) { console.error('detection parse:', err); }
+            });
+            evtSource.onerror = function() {
+                document.getElementById('conn-status').className = 'connection-status disconnected';
+                document.getElementById('conn-status').textContent = 'Reconnecting...';
+                evtSource.close();
+                setTimeout(connectSSE, 2000);
+            };
+        }
+
+        function sendAction(action, choice) {
+            var body = { action: action };
+            if (choice) body.choice = choice;
+            fetch('/action', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+                .catch(function(err) { console.error('Action error:', err); });
+        }
+
+        function chooseAnswer(letter) {
+            if (inputLocked) return;
+            inputLocked = true;
+            sendAction('answer', letter);
+        }
+
+        function updateInferenceBars(detections) {
+            var container = document.getElementById('inference-bars');
+            var noInf = document.getElementById('no-inference');
+            if (noInf) noInf.remove();
+            hasInferenceData = true;
+            var sorted = Object.keys(detections).sort(function(a, b) { return detections[b] - detections[a]; });
+            container.innerHTML = '';
+            sorted.forEach(function(label) {
+                var conf = detections[label];
+                var pct = (conf * 100).toFixed(1);
+                var level = conf > 0.7 ? 'high' : (conf > 0.3 ? 'medium' : 'low');
+                var row = document.createElement('div');
+                row.className = 'bar-row';
+                row.innerHTML = '<span class="bar-label">' + label + '</span>' +
+                    '<div class="bar-track"><div class="bar-fill ' + level + '" style="width:' + pct + '%"></div></div>' +
+                    '<span class="bar-value">' + pct + '%</span>';
+                container.appendChild(row);
+            });
+        }
+
+        function addDetection(det) {
+            detectionHistory.unshift(det);
+            if (detectionHistory.length > 30) detectionHistory.pop();
+            var container = document.getElementById('det-log');
+            container.innerHTML = '';
+            detectionHistory.forEach(function(d) {
+                var kwClass = 'kw-' + d.label;
+                var entry = document.createElement('div');
+                entry.className = 'det-entry';
+                entry.innerHTML = '<span class="det-time">' + d.time + '</span>' +
+                    '<span class="det-dot ' + kwClass + '"></span>' +
+                    '<span class="det-label ' + kwClass + '">' + d.label + '</span>';
+                container.appendChild(entry);
+            });
+        }
+
+        function loadDevices() {
+            fetch('/devices').then(function(r) { return r.json(); }).then(function(data) {
+                var sel = document.getElementById('mic-select');
+                sel.innerHTML = '';
+                var devs = data.audio || [];
+                if (devs.length > 0) {
+                    devs.forEach(function(name, i) { var opt = document.createElement('option'); opt.value = i; opt.textContent = name; sel.appendChild(opt); });
+                } else { sel.innerHTML = '<option>No audio devices found</option>'; }
+            }).catch(function() { document.getElementById('mic-select').innerHTML = '<option>Could not load</option>'; });
+        }
+
+        function loadModel() {
+            fetch('/model').then(function(r) { return r.json(); }).then(function(data) {
+                var container = document.getElementById('model-info');
+                var html = '<span class="model-name">' + data.name + '</span>';
+                if (data.owner || data.version) {
+                    var parts = [];
+                    if (data.owner) parts.push(data.owner);
+                    if (data.version) parts.push('v' + data.version);
+                    if (data.sensor) parts.push(data.sensor);
+                    html += '<div class="model-detail">' + parts.join(' &middot; ') + '</div>';
+                }
+                if (data.labels && data.labels.length > 0) {
+                    html += '<div class="model-labels">';
+                    data.labels.forEach(function(label) { html += '<span class="model-label-tag">' + label + '</span>'; });
+                    html += '</div>';
+                }
+                container.innerHTML = html;
+            }).catch(function() {
+                document.getElementById('model-info').innerHTML = '<span class="model-name">Not available</span><div class="model-detail">Could not reach inference runner</div>';
+            });
+        }
+
+        function updateUI(state) {
+            var playerScore = document.getElementById('player-score');
+            var masterScore = document.getElementById('master-score');
+            var roundDisplay = document.getElementById('round-display');
+            playerScore.textContent = state.player_score;
+            masterScore.textContent = state.master_score;
+            roundDisplay.textContent = state.round + '/' + state.total_rounds;
+            playerScore.className = 'value' + (state.player_score > state.master_score ? ' player-ahead' : '');
+            masterScore.className = 'value' + (state.master_score > state.player_score ? ' master-ahead' : '');
+
+            document.getElementById('intro-screen').style.display = 'none';
+            document.getElementById('fight-screen').style.display = 'none';
+            document.getElementById('win-screen').style.display = 'none';
+            document.getElementById('lose-screen').style.display = 'none';
+
+            switch (state.phase) {
+                case 'intro':
+                    document.getElementById('intro-screen').style.display = 'block';
+                    document.getElementById('scoreboard').style.display = 'none';
+                    document.getElementById('swords-divider').style.display = 'none';
+                    inputLocked = false; break;
+                case 'waiting':
+                    document.getElementById('scoreboard').style.display = 'flex';
+                    document.getElementById('swords-divider').style.display = 'block';
+                    document.getElementById('fight-screen').style.display = 'block';
+                    inputLocked = false; showInsult(state); break;
+                case 'result':
+                    document.getElementById('scoreboard').style.display = 'flex';
+                    document.getElementById('swords-divider').style.display = 'block';
+                    document.getElementById('fight-screen').style.display = 'block';
+                    inputLocked = true; showResult(state); break;
+                case 'win':
+                    document.getElementById('scoreboard').style.display = 'flex';
+                    document.getElementById('swords-divider').style.display = 'block';
+                    document.getElementById('win-screen').style.display = 'block';
+                    inputLocked = true; showEndLog('win-log', state.fight_log); break;
+                case 'lose':
+                    document.getElementById('scoreboard').style.display = 'flex';
+                    document.getElementById('swords-divider').style.display = 'block';
+                    document.getElementById('lose-screen').style.display = 'block';
+                    inputLocked = true; showEndLog('lose-log', state.fight_log); break;
+            }
+        }
+
+        function showInsult(state) {
+            document.getElementById('insult-text').textContent = '"' + state.insult + '"';
+            document.getElementById('voice-hint').style.display = 'block';
+            document.getElementById('result-area').innerHTML = '';
+            var optionsArea = document.getElementById('options-area');
+            optionsArea.innerHTML = '';
+            ['A', 'B', 'C'].forEach(function(letter) {
+                var opt = document.createElement('div');
+                opt.className = 'option clickable';
+                opt.onclick = function() { chooseAnswer(letter); };
+                opt.innerHTML = '<div class="letter">' + letter + '</div><div class="comeback-text">"' + state.options[letter] + '"</div>';
+                optionsArea.appendChild(opt);
+            });
+            showFightLog(state.fight_log);
+        }
+
+        function showResult(state) {
+            var result = state.last_result;
+            if (!result) return;
+            document.getElementById('insult-text').textContent = '"' + result.insult + '"';
+            document.getElementById('voice-hint').style.display = 'none';
+            var optionsArea = document.getElementById('options-area');
+            optionsArea.innerHTML = '';
+            ['A', 'B', 'C'].forEach(function(letter) {
+                var opt = document.createElement('div');
+                var className = 'option';
+                if (letter === result.chosen && result.is_correct) className += ' selected-correct';
+                else if (letter === result.chosen && !result.is_correct) className += ' selected-wrong';
+                else if (letter === result.correct_letter && !result.is_correct) className += ' was-correct';
+                var text;
+                if (letter === result.chosen) text = result.chosen_comeback;
+                else if (letter === result.correct_letter && !result.is_correct) text = result.correct_comeback;
+                else text = '...';
+                opt.className = className;
+                opt.innerHTML = '<div class="letter">' + letter + '</div><div class="comeback-text">"' + text + '"</div>';
+                optionsArea.appendChild(opt);
+            });
+            var resultArea = document.getElementById('result-area');
+            if (result.is_correct) {
+                resultArea.innerHTML = '<div class="result-banner correct"><div class="result-icon">&#9876;</div><div class="result-text">A palpable hit! The Sword Master staggers!</div></div>';
+            } else {
+                resultArea.innerHTML = '<div class="result-banner wrong"><div class="result-icon">&#128169;</div><div class="result-text">The Sword Master presses her advantage!</div></div>';
+            }
+            showFightLog(state.fight_log);
+        }
+
+        function showFightLog(log) {
+            var logContainer = document.getElementById('fight-log');
+            var logEntries = document.getElementById('log-entries');
+            if (!log || log.length === 0) { logContainer.style.display = 'none'; return; }
+            logContainer.style.display = 'block';
+            logEntries.innerHTML = '';
+            log.forEach(function(entry, i) {
+                var div = document.createElement('div');
+                div.className = 'log-entry ' + (entry.is_correct ? 'correct-log' : 'wrong-log');
+                var truncated = entry.insult.length > 35 ? entry.insult.substring(0, 35) + '...' : entry.insult;
+                div.innerHTML = '<span class="log-icon">' + (entry.is_correct ? '&#9876;' : '&#128169;') + '</span>' +
+                    '<span class="log-text">R' + (i + 1) + ': "' + truncated + '" &mdash; ' + entry.chosen +
+                    (entry.is_correct ? ' &#9989;' : ' &#10060; ' + entry.correct_letter) + '</span>';
+                logEntries.appendChild(div);
+            });
+        }
+
+        function showEndLog(containerId, log) {
+            var container = document.getElementById(containerId);
+            if (!log || log.length === 0) return;
+            var html = '<div class="fight-log" style="text-align:left;"><h3>Battle Summary</h3>';
+            log.forEach(function(entry, i) {
+                html += '<div class="log-entry ' + (entry.is_correct ? 'correct-log' : 'wrong-log') + '">' +
+                    '<span class="log-icon">' + (entry.is_correct ? '&#9876;' : '&#128169;') + '</span>' +
+                    '<span class="log-text">Round ' + (i + 1) + ': ' + (entry.is_correct ? 'Won' : 'Lost') + '</span></div>';
+            });
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        document.addEventListener('keydown', function(e) {
+            var key = e.key.toUpperCase();
+            if (key === 'A' || key === 'B' || key === 'C') chooseAnswer(key);
+        });
+
+        connectSSE();
+        loadDevices();
+        loadModel();
+    </script>
+</body>
+</html>

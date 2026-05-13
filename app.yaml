@@ -1,0 +1,6 @@
+name: Monkey Island Insult Sword Fight
+description: Voice-controlled insult sword fighting game inspired by The Secret of Monkey Island
+icon: "⚔️"
+ports: [5001]
+bricks:
+  - arduino:keyword_spotting
