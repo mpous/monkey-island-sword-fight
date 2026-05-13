@@ -13,7 +13,7 @@ The Sword Master throws insults at you. Speak **A**, **B**, or **C** into the mi
 
 ### Edge Impulse: Train the A/B/C keyword spotting model
 
-1. Create a new project at [studio.edgeimpulse.com](https://studio.edgeimpulse.com)
+1. [Clone this project](https://studio.edgeimpulse.com/public/995535/live) from Edge Impulse.
 2. **Data Acquisition** — collect audio samples:
    - **Class "A"**: Record yourself saying "A" clearly, 30+ samples, 1 second each
    - **Class "B"**: Record "B", 30+ samples
