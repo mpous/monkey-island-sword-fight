@@ -48,7 +48,6 @@ The Sword Master throws insults at you. Speak **A**, **B**, or **C** into the mi
 ![Arduino App Lab Keyword Spotting brick](assets/app-lab-brick.png)
 
 
-
 ## Deploy to Arduino UNO Q
 
 1. Clone the application from this Github repository into your computer or directly to your Arduino UNO Q
@@ -61,6 +60,8 @@ The Sword Master throws insults at you. Speak **A**, **B**, or **C** into the mi
 8. Click **Run**
 9. Open a browser to `http://<UNO_Q_IP>:5001` to play!
 
+
+![Fight](assets/play.png)
 
 ## The game mechanics
 
