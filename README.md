@@ -11,6 +11,14 @@ The Sword Master throws insults at you. Speak **A**, **B**, or **C** into the mi
 
 ## Prerequisites
 
+
+### Hardware
+
+- Arduino UNO Q (2GB or 4GB)
+- USB webcam with microphone connected to the Arduino UNO Q USB Hub
+- Arduino App Lab 0.7+ installed on your computer
+
+
 ### Edge Impulse: Train the A/B/C keyword spotting model
 
 1. [Clone this project](https://studio.edgeimpulse.com/public/995535/live) from Edge Impulse.
@@ -39,12 +47,6 @@ The Sword Master throws insults at you. Speak **A**, **B**, or **C** into the mi
 
 ![Arduino App Lab Keyword Spotting brick](assets/app-lab-brick.png)
 
-
-### Hardware
-
-- Arduino UNO Q (2GB or 4GB)
-- USB webcam with microphone connected to the Arduino UNO Q USB Hub
-- Arduino App Lab 0.7+ installed on your computer
 
 
 ## Deploy to Arduino UNO Q
