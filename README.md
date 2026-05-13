@@ -61,7 +61,7 @@ The Sword Master throws insults at you. Speak **A**, **B**, or **C** into the mi
 9. Open a browser to `http://<UNO_Q_IP>:5001` to play!
 
 
-![Fight](assets/play.png)
+![Fight](assets/fight.png)
 
 ## The game mechanics
 
